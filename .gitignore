@@ -1,0 +1,6 @@
+.venv
+.conda
+src/__pycache__
+models
+raw
+stacked

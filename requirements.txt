@@ -1,0 +1,14 @@
+rasterio
+segmentation-models-pytorch
+pydantic==1.10.22
+albumentations==1.3.0
+numpy
+matplotlib
+tqdm
+sentinelhub
+scikit-learn
+opencv-python
+albumentations
+earthengine-api
+torchmetrics
+patchify
