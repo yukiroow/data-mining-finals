@@ -166,7 +166,7 @@ def evaluate_model(model_path, image_path, mask_path, output_dir):
 
 if __name__ == "__main__":
     evaluate_model(
-        model_path="../models/model.pth",
+        model_path="../models/model-resnet.pth",
         image_path="../stacked/blist_raw_2020.tif",
         mask_path="../truth/2020.tif",
         output_dir="../evaluation_results"

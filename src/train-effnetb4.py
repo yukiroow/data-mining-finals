@@ -121,7 +121,7 @@ def main():
     # Initialize model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = smp.Unet(
-        encoder_name="resnet34",
+        encoder_name="efficientnet-b4",
         encoder_weights="imagenet",
         in_channels=4,
         classes=NUM_CLASSES
@@ -162,7 +162,7 @@ def main():
         # Save best model
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
-            torch.save(model.state_dict(), "../models/model.pth")
+            torch.save(model.state_dict(), "../models/model-effnet.pth")
 
         print(f"Epoch {epoch+1}/{NUM_EPOCHS} | "
               f"Train Loss: {avg_train_loss:.4f} | "
@@ -170,7 +170,7 @@ def main():
 
     # Final test evaluation
     print("\nStarting final evaluation on test set...")
-    model.load_state_dict(torch.load("../models/model.pth"))
+    model.load_state_dict(torch.load("../models/model-effnet.pth"))
     model.eval()
     
     test_loss = 0.0
