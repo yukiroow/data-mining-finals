@@ -7,6 +7,7 @@ import matplotlib.patches as mpatches
 import segmentation_models_pytorch as smp
 from sklearn.metrics import confusion_matrix
 import os
+from copy import deepcopy
 
 # Configuration
 IGNORE_INDEX = 255
@@ -24,7 +25,7 @@ CLASS_NAMES = [
 
 LEGEND_INDICES = [1, 2, 4, 7]
 
-# Reuse the same preprocessing functions from training
+# Same preprocessing functions from training
 original_classes = [0, 1, 2, 5, 7, 8, 10, 11]
 class_mapping = {old: new for new, old in enumerate(original_classes)}
 max_class = max(original_classes)
@@ -44,16 +45,16 @@ def load_and_pad(image_path, mask_path):
     
     with rasterio.open(mask_path) as src:
         mask = remap_classes(src.read(1))
+        meta = deepcopy(src.meta) # Metadata for output TIFF
     
-    # Calculate padding needed for network compatibility
-    divisor = 32  # For ResNet-based UNet
+    divisor = 32
     pad_h = (divisor - (h % divisor)) % divisor
     pad_w = (divisor - (w % divisor)) % divisor
     
     image_padded = np.pad(image, ((0, pad_h), (0, pad_w), (0, 0)), mode='reflect')
     mask_padded = np.pad(mask, ((0, pad_h), (0, pad_w)), mode='constant', constant_values=IGNORE_INDEX)
     
-    return image_padded, mask_padded, (h, w)
+    return image_padded, mask_padded, (h, w), meta
 
 def calculate_metrics(preds, labels, num_classes, ignore_index):
     mask = labels != ignore_index
@@ -106,7 +107,7 @@ def evaluate_model(model_path, image_path, mask_path, output_dir):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Load and pad data
-    image_padded, mask_padded, orig_dims = load_and_pad(image_path, mask_path)
+    image_padded, mask_padded, orig_dims, meta = load_and_pad(image_path, mask_path)
     orig_h, orig_w = orig_dims
     
     # Convert to tensor
@@ -161,6 +162,21 @@ def evaluate_model(model_path, image_path, mask_path, output_dir):
                 metrics['f1_score'][i],
                 support
             ))
+            
+    # Prepare metadata for output TIFF
+    tif_meta = meta.copy()
+    tif_meta.update({
+        'driver': 'GTiff',
+        'count': 1,
+        'dtype': 'uint8', 
+        'nodata': IGNORE_INDEX,
+        'compress': 'lzw'
+    })
+    
+    # Write TIFF file
+    output_tif_path = os.path.join(output_dir, '2020_BLIST-lcm.tif')
+    with rasterio.open(output_tif_path, 'w', **tif_meta) as dst:
+        dst.write(final_pred.astype('uint8'), 1)  # Write to band 1
     
     print(f"Evaluation complete. Results saved to {output_dir}")
 
