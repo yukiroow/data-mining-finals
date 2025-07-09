@@ -38,8 +38,9 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 cd src
 # Merge the raw imagery first
 python merge.py
-# Run model
-python train.py
-# Evaluate on different imagery
+# Run model training scripts
+python train-resnet34.py
+python train-effnetb4.py
+# Evaluate the winning model :D
 python eval.py
 ```
